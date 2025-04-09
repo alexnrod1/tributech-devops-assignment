@@ -1,0 +1,117 @@
+# =========================
+# INGRESS CONTROLLER CONFIG
+# =========================
+ingress-nginx:
+  controller:
+    service:
+      type: NodePort
+      nodePorts:
+        http: 30080
+    ingressClassResource:
+      name: nginx
+    ingressClass: nginx
+    publishService:
+      enabled: false
+
+
+# =========================
+# POSTGRESQL CONFIG
+# =========================
+postgresql:
+  enabled: true
+  auth:
+    username: keycloak
+    password: B2qazwe1
+    database: keycloakdb
+
+  primary:
+    service:
+      type: NodePort
+      nodePorts:
+        postgresql: 32001
+    persistence:
+      enabled: false
+
+# =========================
+# PGADMIN CONFIG
+# =========================
+pgadmin4:
+  enabled: true
+
+  image:
+    repository: dpage/pgadmin4
+    tag: "latest"
+    pullPolicy: IfNotPresent
+
+  extraArgs:
+    - "--load-servers" # troubleshoot why the server is not visible
+
+  env:
+    email: admin@tributech.io
+    password: B2qazwe1
+
+  service:
+    type: ClusterIP
+    port: 8090
+
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+    hosts:
+      - host: pgadmin.local
+        paths:
+          - path: /
+            pathType: Prefix
+
+  serverDefinitions:
+    enabled: true
+    servers:
+      "1":
+        Name: tributech-postgres
+        Group: "Server Group 1"
+        Host: "postgresql.local" # postgresql.local cannot be resovled for some reasons
+        HostAddr: "164.90.234.114"
+        Port: 32001
+        MaintenanceDB: keycloakdb
+        Username: keycloak
+        SSLMode: prefer
+
+# =========================
+# KEYCLOAK CONFIG
+# =========================
+keycloak:
+  enabled: true
+
+  auth:
+    adminUser: admin
+    adminPassword: B2qazwe1
+
+  postgresql:
+    enabled: false
+
+  externalDatabase:
+    host: tributech-app-postgresql
+    user: keycloak
+    password: B2qazwe1
+    database: keycloakdb
+
+  service:
+    type: NodePort # put behind reverse proxy
+
+#  ingress:
+#    enabled: true
+#    ingressClassName: nginx
+#    hostname: keycloak.local
+#    annotations:
+#      nginx.ingress.kubernetes.io/rewrite-target: /
+#    tls: false
+#
+#  extraEnvVars:
+#    - name: KC_PROXY_HEADERS
+#      value: "xforwarded"
+#    - name: KC_HOSTNAME
+#      value: "keycloak.local"
+#    - name: KC_HOSTNAME_URL
+#      value: "http://keycloak.local:30080"

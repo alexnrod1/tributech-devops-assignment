@@ -1,0 +1,15 @@
+dependencies:
+- name: ingress-nginx
+  repository: https://kubernetes.github.io/ingress-nginx
+  version: 4.12.1
+- name: postgresql
+  repository: https://charts.bitnami.com/bitnami
+  version: 16.6.2
+- name: pgadmin4
+  repository: https://helm.runix.net
+  version: 1.37.0
+- name: keycloak
+  repository: https://charts.bitnami.com/bitnami
+  version: 24.5.1
+digest: sha256:b2027142a9e60dc43d63160413fa368c789443b30ea04dc56c9489889697aba8
+generated: "2025-04-09T19:52:28.005333474Z"

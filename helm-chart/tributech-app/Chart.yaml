@@ -1,0 +1,24 @@
+apiVersion: v2
+name: tributech-app
+description: A Helm chart for solution consisting of frontend, db and auth broker
+type: application
+version: "0.1.0"
+
+dependencies:
+- name: ingress-nginx
+  version: 4.12.1
+  repository: https://kubernetes.github.io/ingress-nginx
+  alias: ingress-nginx
+
+- name: postgresql
+  version: 16.6.2
+  repository: https://charts.bitnami.com/bitnami
+
+- name: pgadmin4
+  version: 1.37.0
+  repository: https://helm.runix.net
+
+- name: keycloak
+  version: 24.5.1
+  repository: https://charts.bitnami.com/bitnami
+
