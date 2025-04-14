@@ -13,6 +13,11 @@ dependencies:
   version: 1.37.0
   repository: https://helm.runix.net
 
+#- name: keycloak-config-cli
+#  version: 1.2.3
+#  repository: https://jkroepke.github.io/helm-charts/
+#  alias: keycloakconfig
+
 #- name: keycloak
 #  version: 24.5.1
 #  repository: https://charts.bitnami.com/bitnami

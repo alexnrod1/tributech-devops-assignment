@@ -3,31 +3,6 @@ global:
     httpNodePort: 30080
     httpsNodePort: 32438
 
-# =========================
-# INGRESS CONTROLLER CONFIG
-# =========================
-#ingress-nginx:
-#  controller:
-#    service:
-#      type: NodePort
-#      nodePorts:
-#        http: 30080
-#        https: 32438
-#    ingressClassResource:
-#      name: nginx
-#    ingressClass: nginx
-#    publishService:
-#      enabled: false
-#    allowSnippetAnnotations: true  # essential for setting server-snippet in ingress
-#    admissionWebhooks:
-#      annotations:
-#        nginx.ingress.kubernetes.io/annotations-risk-level: "Critical"    
-#    config:
-#      enable-access-log: "true"
-#      log-level: debug
-# =========================
-# WEBSITE CONFIG
-# =========================
 website:
   image:
     name: tributech-ui-oauth-sample
@@ -53,9 +28,7 @@ postgresql:
 
   primary:
     service:
-      type: NodePort
-      nodePorts:
-        postgresql: 32001
+      type: ClusterIP
     persistence:
       enabled: false
 
@@ -71,7 +44,7 @@ pgadmin4:
     pullPolicy: IfNotPresent
 
   extraArgs:
-    - "--load-servers" # troubleshoot why the server is not visible
+    - "--load-servers"
 
   env:
     email: admin@tributech.io
@@ -97,109 +70,9 @@ pgadmin4:
     servers:
       "1":
         Name: tributech-postgres
-        Group: "Server Group 1"
-        Host: "postgresql.local" # postgresql.local cannot be resovled for some reasons
-        HostAddr: "164.90.234.114"
-        Port: 32001
+        Group: "Server Group Automatic"
+        Host: "tributech-app-postgresql.default.svc.cluster.local"
+        Port: 5432
         MaintenanceDB: keycloakdb
         Username: keycloak
         SSLMode: prefer
-
-# =========================
-# KEYCLOAK CONFIG
-# =========================
-#keycloak:
-#  enabled: true
-#
-#  headless:
-#    enabled: false
-#
-#  tls:
-#    enabled: false
-#
-#  auth:
-#    adminUser: admin
-#    adminPassword: B2qazwe1
-#
-#  postgresql:
-#    enabled: false
-#
-#  externalDatabase:
-#    host: tributech-app-postgresql
-#    user: keycloak
-#    password: B2qazwe1
-#    database: keycloakdb
-#
-#  service:
-#    type: ClusterIP
-#    ports:
-#      http: 8080
-#    http:
-#      enabled: true
-#
-#  ingress:
-#    enabled: true
-#    ingressClassName: nginx
-#    hostname: keycloak.local
-#    tls: true
-#    path: /
-#    extraTls:
-#      - hosts:
-#          - keycloak.local
-#        secretName: keycloak-local-tls
-#    extraPaths:
-#      - path: /realms/
-#        pathType: Prefix
-#        backend:
-#          service:
-#            name: tributech-app-keycloak
-#            port:
-#              name: http    
-#      - path: /resources/
-#        pathType: Prefix
-#        backend:
-#          service:
-#            name: tributech-app-keycloak
-#            port:
-#              name: http
-#    annotations:
-#      nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-#      nginx.ingress.kubernetes.io/ssl-redirect: "true"
-#      nginx.ingress.kubernetes.io/use-regex: "true"
-#      nginx.ingress.kubernetes.io/cors-allow-origin: "http://keycloak.local:30080, http://keycloak.local, http://keycloak.local:30080, http://website.local"
-#      nginx.ingress.kubernetes.io/configuration-snippet: |
-#        proxy_set_header Host $host;
-#        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-#        proxy_set_header X-Forwarded-Proto $scheme;
-#        proxy_set_header X-Forwarded-Host $host;
-#        proxy_set_header X-Forwarded-Port 32438;
-#        proxy_set_header Forwarded "proto=https;host=$host;port=32438";
-#
-#  extraEnvVars:
-#    - name: KC_PROXY_HEADERS
-#      value: "xforwarded"
-##    - name: KC_HTTP_ENABLED
-##      value: "true"
-#    - name: KC_PROXY
-#      value: "edge"
-##    - name: KC_HOSTNAME
-##      value: "keycloak.local"    
-##    - name: KC_HOSTNAME_PORT
-##      value: "30080"
-##    - name: KC_HOSTNAME_URL
-##      value: "http://keycloak.local:32438"
-##    - name: KC_HOSTNAME_ADMIN_URL
-##      value: "http://keycloak.local:32438"
-##
-#  keycloakConfigCli:
-#    enabled: true    
-#    existingConfigmap: tributech-keycloak-realm-config
-#    extraEnvVars:
-#      - name: KEYCLOAK_URL
-#        value: "http://tributech-app-keycloak.default.svc.cluster.local:8080"
-#      - name: KEYCLOAK_USER
-#        value: "admin"
-#      - name: KEYCLOAK_PASSWORD
-#        value: "B2qazwe1"
-#
-#
