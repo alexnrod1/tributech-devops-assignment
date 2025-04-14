@@ -76,3 +76,24 @@ pgadmin4:
         MaintenanceDB: keycloakdb
         Username: keycloak
         SSLMode: prefer
+
+# =========================
+# PGADMIN CONFIG
+# =========================
+keycloak:
+  image:
+    repository: keycloak/keycloak
+    tag: "26.2"
+
+  hostname: keycloak.local
+
+  admin:
+    user: admin
+    password: B2qazwe1
+
+  db:
+    vendor: postgres
+    host: tributech-app-postgresql
+    name: keycloakdb
+    username: keycloak
+    password: B2qazwe1
