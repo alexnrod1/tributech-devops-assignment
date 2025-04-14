@@ -14,10 +14,6 @@ spec:
       labels:
         app: keycloak
     spec:
-#      volumes:
-#        - name: realm-config
-#          configMap:
-#            name: tributech-keycloak-realm-config    
       containers:
         - name: keycloak
           image: keycloak/keycloak:26.2
@@ -61,31 +57,3 @@ spec:
               containerPort: 8080
             - name: https
               containerPort: 8443
-
-#        - name: keycloak-config-cli
-#          image: adorsys/keycloak-config-cli:latest
-#          env:
-#            - name: KEYCLOAK_URL
-#              value: "http://keycloak.default.svc.cluster.local:8080/"
-#            - name: KEYCLOAK_USER
-#              value: "admin"
-#            - name: KEYCLOAK_PASSWORD
-#              value: "B2qazwe1"
-#            - name: KEYCLOAK_AVAILABILITYCHECK_ENABLED
-#              value: "true"              
-#            - name: KEYCLOAK_AVAILABILITYCHECK_TIMEOUT
-#              value: "30s"          
-#            - name: KEYCLOAK_SSLVERIFY
-#              value: "false"                                
-#            - name: IMPORT_FILES_LOCATIONS
-#              value: "/config/node-realm.yaml"
-#          volumeMounts:
-#            - name: realm-config
-#              mountPath: /config
-#
-#          command: ["/bin/sh", "-c"]
-#          args:
-#             - |
-#               sleep 300 && YOUR_EXISTING_COMMAND
-
-# until curl -s http://keycloak.default.svc.cluster.local:8080/realms/master > /dev/null; do              

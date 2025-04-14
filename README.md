@@ -1,198 +1,121 @@
-# DevOps Engineer Technical Assignment: Helm Chart with Keycloak, PostgreSQL, and Website Deployment
+## Introduction
+This repo contains a single helm chart that set up an environment as per requirements https://github.com/tributech-solutions/tributech-devops-assignment
 
-## Objective
+## Concept and Design:
+Postulates:
+- reuse 3rd party helm charts where feasible, and use latest versions
+- strive for simplicity
+- automate as much as possible (without being obsessed though)
 
-This assignment is designed to evaluate your ability to:
-1. Design and write a Helm chart for a multi-component system.
-2. Set up a local Kubernetes environment for testing and deployment.
-3. Document your process, decisions, and provide clear instructions for testing.
+The app is supposed to run on a k3s cluster.
 
----
+## Network
+1. It is supposed that setup is running on a VM and is exposed outside via NodePort.
+2 node ports are used:
+- http: 30080
+- https: 32438
 
-## Tasks
+2. Nginx resides in a dedicated namespace `ingress-nginx`, feel free to use any you prefer.
+3. Only http/https nodes are exposed to outside
+4. https is used for keyCloak and website only
+5. SSL termination is done on Ingress level, traffic goes to and between pods unencrypted
 
-### 1. Write a Helm Chart
+## Tradeoffs
+- Security vs Speed: No k8s secrets/env variables are used for passwords and sensitive strings, keyCloak admin panel is exposed
 
-Create a Umbrella Helm chart to deploy the following components in a Kubernetes cluster:
+- 3rd party helm chart vs Speed & Configurability & Predictability: Unfortunately, I could not make use of the Bitnami keyCloak due to certain ambiguity In documentation when it comes reverse proxy setup
+- Reusability vs Reasonability: Overrides in helm release are almost not used.
 
-- **Keycloak**:
-  - Set up Keycloak as the authentication provider.
-  - Expose it via an HTTP/HTTPS service using an Ingress.
-  - Check if you can reuse the [Bitnami Keycloak Project](https://artifacthub.io/packages/helm/bitnami/keycloak)
+## Testing
 
-- **PostgreSQL**:
-  - Deploy a PostgreSQL database to be used by Keycloak.
-  - Use environment variables to configure Keycloak to connect to the database.
+### Assumptions
+You have ubuntu VM with OS > 22.04
+You have ssh access under root
+Git is single installed tool
 
-- **PGAdmin**:
-  - Deploy PGAdmin to allow management of the PostgreSQL database.
-  - Expose it via an HTTP service using an Ingress.
+### ⚠️ When you stick with the suggested Node ports 30080 and 32438
+On the VM, run:
+```
+mkdir git
+cd git
+git clone https://github.com/alexnrod1/tributech-devops-assignment.git
+cd tributech-devops-assignment/deploy
+chmod +x spin-up-environment.sh
+./spin-up-environment.sh
+```
+This will setup k3s, docker and build Website docker file.
 
-- **Website**:
-  - A simple website that **will be provided by Tributech**. This website will support authentication via Keycloak.
-  - **Tributech** will provide a Github Repository where you can find a complete Website with a Docker instructions.
-  - Clone the repository and check the configuration and build the Docker Image locally.
-  - The Helm chart should configure the website to authenticate using the Keycloak instance.
-
-**Helm Chart Requirements**:
-- Use the Umbrella approach for this Helm chart and provide a chart for each component (Keycloak, PostgreSQL, PGAdmin, and the website).
-- Provide configurable options in `values.yaml` for:
-  - Database credentials.
-  - Hostnames for Keycloak, PGAdmin, and the website.
-  - Check the configuration of website and if there should be overrides for the `values.yaml`
-- The chart must be customizable using `helm install` overrides.
-
----
-
-### 2. Set Up Local Development Environment
-
-Set up a local Kubernetes cluster and prepare the environment for testing the Helm chart.
-
-#### Prerequisites:
-- Any Kubernetes distribution (e.g., Minikube, Kind, or K3s) version >= 1.29.0
-- [NGNIX](https://github.com/kubernetes/ingress-nginx)
-- Docker runtime.
-- Helm CLI installed and configured.
-
-#### Steps:
-1. Set up a local Kubernetes cluster.
-2. Install and configure Helm CLI.
-3. Deploy the Helm chart to the local cluster.
-4. Validate the deployment:
-   - Ensure all components are running.
-   - Verify that the configmaps, services, secrets are valid
-   - Verify that Ingress (NGNIX) is up and running
-   - Verify that:
-     - Keycloak is accessible via Ingress (Admin Website should be visitable)
-     - PostgreSQL is functional and connected to Keycloak.
-     - PGAdmin is accessible and connects to PostgreSQL.
-     - The provided website uses Keycloak for authentication and displays `Success` after login
-
----
-
-### 3. Documentation
-
-Write a `README.md` file that includes:
-
-1. **Concept and Design**:
-   - Explain your architecture and approach to designing the Helm chart.
-   - Describe how the components interact and are configured.
-
-2. **Testing Instructions**:
-   - Step-by-step instructions for:
-     - Setting up the local Kubernetes environment.
-     - Deploying the Helm chart.
-     - Validating each component (Keycloak, PostgreSQL, PGAdmin, and the website).
-   - Include example `helm install` commands with parameter overrides.
-
-3. **Testing in Our Infrastructure**:
-   - Provide instructions for deploying the Helm chart to our Kubernetes infrastructure.
-   - Mention any prerequisites or assumptions (e.g., an existing Ingress controller or namespace setup).
-
----
-
-## Deliverables
-
-Once you complete the tasks, provide the following:
-
-1. A fork of this repository with:
-   - The Helm chart in a directory called `helm-chart/`.
-   - A `values.yaml` file for the default configuration.
-   - A corrected and working `README.md` file with detailed instructions.
-2. Screenshots or evidence of the deployed application running in your local Kubernetes environment.
-3. A link to your forked repository, shared with us.
-
----
-
-## Example `values.yaml`
-
-Below is an example configuration file to guide your implementation:
-
-```yaml
-keycloak:
-  ingress:
-    enabled: true
-    hostname: keycloak.local
-
-postgresql:
-  username: keycloak
-  password: keycloakpassword
-  database: keycloakdb
-
-pgadmin:
-  ingress:
-    enabled: true
-    hostname: pgadmin.local
-  admin:
-    email: admin@example.com
-    password: adminpassword
-
-website:
-  ingress:
-    enabled: true
-  hostname: website.local
+Perform next steps to install nginx ingress controller:
+```
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+helm install ingress-nginx ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx --create-namespace \
+  --set controller.service.type=NodePort \
+  --set controller.service.nodePorts.http=30080 \
+  --set controller.service.nodePorts.https=32438 \
+  --set controller.ingressClass=nginx \
+  --set controller.ingressClassResource.name=nginx
+```
+Execute below command to point to the Kubernetes configuration file used by k3s:
+```
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 ```
 
----
+Then spin up the app wih helm:
+```
+cd /root/git/tributech-devops-assignment/helm-chart/tributech-app
+helm install tributech-app .
+```
 
-## Setup Instructions
+It's going to take 3-4 mins to configure, mainly due to configuration of pgadmin and keyCloak.
+Run `kubectl get pods` to check the status, all Pods should have Running status, and the keyCloak config cli job mus have Completed status
 
-1. **Fork This Repository**:
-   - Fork this repository to your GitHub account to begin working on the assignment.
+Make sure your hosts file contains records for below domains (134.122.71.39 is the IP address of the VM. When no VM is used, set IP to 127.0.0.1):
+```
+134.122.71.39 pgadmin.local
+134.122.71.39 website.local
+134.122.71.39 keycloak.local
+```
 
-2. **Install Prerequisites**:
-   - Install Docker, Kubernetes (e.g., Minikube or Kind), and Helm CLI.
-   - Set up a local Kubernetes cluster.
+As a result, you should be able to access below resources on your browser:
+- https://website.local:32438/
+- https://keycloak.local:32438/admin/master/console
+- http://pgadmin.local:30080/
 
-3. **Deploy the Helm Chart**:
-   - Clone your forked repository to your local machine.
-   - Navigate to the `helm-chart/` directory.
-   - Deploy the chart using Helm:
-     ```bash
-     helm install my-app ./helm-chart -f values.yaml
-     ```
+To authenicate on the Web UI, use below credentials:
 
-4. **Validate the Deployment**:
-   - Add entries to your local `/etc/hosts` file for the Ingress hostnames (e.g., `keycloak.local`, `pgadmin.local`, `website.local`).
-   - Verify the following:
-     - Keycloak is accessible via `http://keycloak.local`.
-     - PGAdmin is accessible via `http://pgadmin.local`.
-     - The website is accessible via `http://website.local` and authentication works with Keycloak.
+login: `angular-user`
+password: `B2qazwe1`
 
----
+You will be asked for setting up email, fist name and last name for the 1st time.
 
-## Evaluation Criteria
+✅As a result, you should see "Is Authenicated: true"
 
-1. **Helm Chart Quality**:
-   - Correct use of Helm templates and values.
-   - Logical organization and reusability of templates.
-   - Proper handling of configuration via `values.yaml`.
+### ⚠️ When you use custom Node Ports for http and https
 
-2. **Deployment**:
-   - Successful deployment of all components using the Helm chart.
-   - Integration between Keycloak, PostgreSQL, and the website.
+Specify your **https** NodePort input parameter when executing the spin-up-environment.sh script.
+For instance, when your https port is 33333, run:
+```
+mkdir git
+cd git
+git clone https://github.com/alexnrod1/tributech-devops-assignment.git
+cd tributech-devops-assignment/deploy
+chmod +x spin-up-environment.sh
+./spin-up-environment.sh 33333
+```
+Then override input parameters when running Helm release install.
+Below command assumes you have 33333 https and 33334 http:
+```
+cd /root/git/tributech-devops-assignment/helm-chart/tributech-app
+helm install --install tributech-app . \
+  --set global.ingress.httpNodePort=33334 \
+  --set global.ingress.httpsNodePort=33333
+```
 
-3. **Documentation**:
-   - Clarity, detail, and accuracy of the `README.md` file.
-   - Correct explanation of the deployment process.
+✅As a result, you should be able to access below resources on your browser:
+- https://website.local:33333/
+- https://keycloak.local:33334/admin/master/console
+- http://pgadmin.local:33334/
 
-4. **Problem-Solving Skills**:
-   - Your approach to configuring and deploying the components.
-   - Handling challenges such as Ingress setup and inter-service communication.
-
----
-
-## Bonus Points
-
-- Add health checks for all services in the Helm chart.
-- Include automated tests for validating the deployment.
-- Use environment variables or Kubernetes secrets for sensitive information (e.g., database credentials).
-- Provide additional customization options in the Helm chart.
-
----
-
-This assignment is designed to assess your ability to work with Kubernetes, Helm, and Docker while demonstrating clear communication through documentation. Once you have completed the tasks, please share the link to your forked repository with us.
-
---- 
-
-You can directly copy this into the **README.md** of your GitHub repository. Let me know if you need further adjustments!
+Proceed the same actions to authenticate.

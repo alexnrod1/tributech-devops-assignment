@@ -11,7 +11,7 @@ data:
         publicClient: true
         standardFlowEnabled: true
         redirectUris:
-          - "https://website.local:{{ .Values.global.ingress.httpsNodePort }}//*"
+          - "https://website.local:{{ .Values.global.ingress.httpsNodePort }}/*"
         webOrigins:
           - "https://website.local:{{ .Values.global.ingress.httpsNodePort }}/"
     users:
