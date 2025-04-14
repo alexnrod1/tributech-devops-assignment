@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tributech-website
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tributech-website
+  template:
+    metadata:
+      labels:
+        app: tributech-website
+    spec:
+      containers:
+      - name: tributech-website
+        image: "{{ .Values.website.image.name }}:{{ .Values.website.image.tag }}"
+        imagePullPolicy: {{ .Values.website.image.pullPolicy }}
+        args: ["npm", "run", "start", "--", "--ssl", "false"]
+        ports:
+        - containerPort: {{ .Values.website.service.port }}

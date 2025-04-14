@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tributech-website-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - {{ .Values.website.ingress.host }}
+      secretName: tributech-local-tls
+  rules:
+    - host: {{ .Values.website.ingress.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: tributech-website-service
+                port:
+                  number: {{ .Values.website.service.port }}

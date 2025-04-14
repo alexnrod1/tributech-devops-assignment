@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  labels:
+    app: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+      - name: keycloak
+        image: quay.io/keycloak/keycloak:26.2
+        args:
+          - "start"
+          - "--proxy-headers"
+          - "xforwarded"
+          - "--http-enabled"
+          - "true"
+          - "--hostname-strict"
+          - "false"
+          - "--hostname"
+          - "https://keycloak.local:{{ .Values.global.ingress.httpsNodePort }}"
+
+        env:
+        - name: KC_PROXY_HEADERS
+          value: "xforwarded"
+        - name: KEYCLOAK_ADMIN
+          value: "admin"
+        - name: KEYCLOAK_ADMIN_PASSWORD
+          value: "B2qazwe1"
+        - name: KC_HEALTH_ENABLED
+          value: "false"
+        - name: KC_METRICS_ENABLED
+          value: "false"
+        - name: KC_HTTP_ENABLED
+          value: "true"
+        - name: KC_DB
+          value: "postgres"
+        - name: KC_DB_URL_HOST
+          value: "tributech-app-postgresql"
+        - name: KC_DB_URL_PORT
+          value: "5432"
+        - name: KC_DB_URL_DATABASE
+          value: "keycloakdb"
+        - name: KC_DB_USERNAME
+          value: "keycloak"
+        - name: KC_DB_PASSWORD
+          value: "B2qazwe1"
+
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: https
+          containerPort: 8443

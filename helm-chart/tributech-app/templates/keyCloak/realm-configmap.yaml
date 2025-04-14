@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tributech-keycloak-realm-config
+  namespace: default
+  labels:
+    app.kubernetes.io/name: keycloak-config
+    app.kubernetes.io/component: realm-import
+data:
+  node-realm.yaml: |
+    realm: node
+    enabled: true
+    clients:
+      - clientId: dataspace-admin
+        publicClient: true
+        directAccessGrantsEnabled: true
+        standardFlowEnabled: true
+        rootUrl: "https://website.local:{{ .Values.global.ingress.httpNodePort }}/*"
+        redirectUris:
+          - "https://website.local:{{ .Values.global.ingress.httpNodePort }}/*"
+        webOrigins:
+          - "https://website.local:{{ .Values.global.ingress.httpNodePort }}"
+    users:
+      - username: angular-user
+        enabled: true
+        emailVerified: true
+        credentials:
+          - type: password
+            value: B2qazwe1
+            temporary: false
