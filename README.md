@@ -1,5 +1,5 @@
 ## Introduction
-This repo contains a single helm chart that set up an environment as per requirements https://github.com/tributech-solutions/tributech-devops-assignment
+This repo contains a single helm chart that sets up an environment as per requirements https://github.com/tributech-solutions/tributech-devops-assignment
 
 ## Concept and Design:
 Postulates:
@@ -15,23 +15,23 @@ The app is supposed to run on a k3s cluster.
 - http: 30080
 - https: 32438
 
-2. Nginx resides in a dedicated namespace `ingress-nginx`, feel free to use any you prefer.
-3. Only http/https nodes are exposed to outside
+2. Nginx ingress controller resides in a dedicated namespace `ingress-nginx`, feel free to use any you prefer.
+3. Only http/https ports are exposed to outside
 4. https is used for keyCloak and website only
-5. SSL termination is done on Ingress level, traffic goes to and between pods unencrypted
+5. SSL termination is done on Ingress level, traffic goes to and between pods unencrypted.
 
 ## Tradeoffs
 - Security vs Speed: No k8s secrets/env variables are used for passwords and sensitive strings, keyCloak admin panel is exposed
-
-- 3rd party helm chart vs Speed & Configurability & Predictability: Unfortunately, I could not make use of the Bitnami keyCloak due to certain ambiguity In documentation when it comes reverse proxy setup
+- 3rd party helm chart vs Speed & Configurability & Predictability: Unfortunately, I could not make use of the Bitnami keyCloak due to certain ambiguity in documentation when it comes to reverse proxy setup
 - Reusability vs Reasonability: Overrides in helm release are almost not used.
 
 ## Testing
 
 ### Assumptions
-You have ubuntu VM with OS > 22.04
-You have ssh access under root
-Git is single installed tool
+- You have ubuntu VM with OS >= 22.04
+- You have ssh access under root
+- Git is a single installed tool
+- Firewall (ufw or iptables) is not set.
 
 ### ⚠️ When you stick with the suggested Node ports 30080 and 32438
 On the VM, run:
@@ -43,7 +43,12 @@ cd tributech-devops-assignment/deploy
 chmod +x spin-up-environment.sh
 ./spin-up-environment.sh
 ```
-This will setup k3s, docker and build Website docker file.
+This will setup k3s, docker and build the Website docker image.
+
+Execute below command to point to the Kubernetes configuration file used by k3s:
+```
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+```
 
 Perform next steps to install nginx ingress controller:
 ```
@@ -57,10 +62,6 @@ helm install ingress-nginx ingress-nginx/ingress-nginx \
   --set controller.ingressClass=nginx \
   --set controller.ingressClassResource.name=nginx
 ```
-Execute below command to point to the Kubernetes configuration file used by k3s:
-```
-export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-```
 
 Then spin up the app wih helm:
 ```
@@ -69,7 +70,7 @@ helm install tributech-app .
 ```
 
 It's going to take 3-4 mins to configure, mainly due to configuration of pgadmin and keyCloak.
-Run `kubectl get pods` to check the status, all Pods should have Running status, and the keyCloak config cli job mus have Completed status
+Run `kubectl get pods` to check the status, all Pods should have Running status, and the keyCloak config cli job must have Completed status.
 
 Make sure your hosts file contains records for below domains (134.122.71.39 is the IP address of the VM. When no VM is used, set IP to 127.0.0.1):
 ```
@@ -78,7 +79,7 @@ Make sure your hosts file contains records for below domains (134.122.71.39 is t
 134.122.71.39 keycloak.local
 ```
 
-As a result, you should be able to access below resources on your browser:
+As a result, you should be able to access below resources in your browser:
 - https://website.local:32438/
 - https://keycloak.local:32438/admin/master/console
 - http://pgadmin.local:30080/
@@ -104,16 +105,16 @@ cd tributech-devops-assignment/deploy
 chmod +x spin-up-environment.sh
 ./spin-up-environment.sh 33333
 ```
-Then override input parameters when running Helm release install.
+Next, override input parameters when running Helm release install.
 Below command assumes you have 33333 https and 33334 http:
 ```
 cd /root/git/tributech-devops-assignment/helm-chart/tributech-app
-helm install --install tributech-app . \
+helm install tributech-app . \
   --set global.ingress.httpNodePort=33334 \
   --set global.ingress.httpsNodePort=33333
 ```
 
-✅As a result, you should be able to access below resources on your browser:
+✅As a result, you should be able to access below resources in your browser:
 - https://website.local:33333/
 - https://keycloak.local:33334/admin/master/console
 - http://pgadmin.local:33334/
